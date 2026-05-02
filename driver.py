@@ -140,15 +140,14 @@ def send_mouse_event(x, y, pressure_norm, is_touching, was_touching):
 
     event = Quartz.CGEventCreateMouseEvent(None, event_type, (x, y), Quartz.kCGMouseButtonLeft)
 
-    # macOS'a bunun standart bir fare değil, bir grafik tablet olduğunu söylüyoruz
+    # we say to macos that this is a tablet event by setting the mouse event subtype to tablet point (1) and adding pressure data
     try:
         tablet_subtype = Quartz.kCGEventMouseSubtypeTabletPoint
     except AttributeError:
-        tablet_subtype = 1 # Fallback değer
+        tablet_subtype = 1
         
     Quartz.CGEventSetIntegerValueField(event, Quartz.kCGMouseEventSubtype, tablet_subtype)
     
-    # Basıncı ata
     Quartz.CGEventSetDoubleValueField(event, Quartz.kCGMouseEventPressure, pressure_norm)
 
     Quartz.CGEventPost(Quartz.kCGHIDEventTap, event)
@@ -166,28 +165,25 @@ def main() -> None:
     pressure_threshold_press = pen_config.get("pressure_threshold_press", 300)
     pressure_threshold_release = pen_config.get("pressure_threshold_release", 200)
 
-    # Ekran çözünürlüğünü Quartz ile alıyoruz
+    # We get the main display size to map the tablet coordinates to screen coordinates
     main_monitor = Quartz.CGDisplayBounds(Quartz.CGMainDisplayID())
     screen_width = Quartz.CGRectGetWidth(main_monitor)
     screen_height = Quartz.CGRectGetHeight(main_monitor)
 
     logging.info("Driver initialized. Searching for device (Automatic reconnection enabled). Press CTRL+C to exit.")
 
-    # DIŞ DÖNGÜ: Cihazı bulma ve yeniden bağlanma
+    # main loop
     while True:
         try:
-            # Cihazı hazırlamayı deniyoruz
             try:
                 dev, endpoint = _prepare_device(config["vendor_id"], config["product_id"], config["reports"])
                 logging.info("Tablet connected! Starting data stream...")
             except Exception as e:
-                # Cihaz takılı değilse veya okunamıyorsa 2 saniye bekleyip tekrar dener
                 time.sleep(5)
                 continue
 
             touch = False
 
-            # İÇ DÖNGÜ: Bağlantı kurulduktan sonra veri okuma
             while True:
                 try:
                     data = dev.read(endpoint.bEndpointAddress, endpoint.wMaxPacketSize)
@@ -220,19 +216,17 @@ def main() -> None:
                     send_mouse_event(mapped_x, mapped_y, pressure_norm, touch, was_touching)
 
                 except usb.core.USBError as e:
-                    # Timeout hataları normal, okumaya devam et
-                    if e.args[0] in [110, 60]: 
+                    # Timeout errors are expected so we just ignore them and continue reading
+                    if e.args[0] == 60: # USB timeout error code is 60 for macOS
                         continue
-                    # Temassızlık durumunda diğer USB hataları fırlatılır. İç döngüyü kırıyoruz.
+                    
                     logging.warning(f"Connection lost (USB Error: {e}). Trying to reconnect...")
-                    break 
+                    break
 
         except KeyboardInterrupt:
-            # Kullanıcı CTRL+C yaparsa program tamamen kapanır
             logging.info("Exiting...")
             break
         except Exception as e:
-            # Beklenmeyen diğer hatalarda programın çökmemesi için
             logging.error(f"Unexpected error occurred: {e}")
 
 

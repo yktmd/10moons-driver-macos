@@ -1,65 +1,57 @@
-# 10moons-driver-vin1060plus
+# 10moons-driver-macos
 
 ![Aliexpress Graphics Tablet VINSA 1060plus](.assets/tablet_photo.jpeg)
 
 [10moons Graphics Tablet product homepage](http://eng.10moons.com/info5494.html)
 
-[Aliexpress equivalent sold under VINSA brand. --- Download User Manual](https://web.archive.org/web/20240609200158/http://blog.ping-it.cn/h/8/sms.pdf)
+[User Manual](https://web.archive.org/web/20240609200158/http://blog.ping-it.cn/h/8/sms.pdf)
 
-This is a Simple driver with pyUSB code modified to handle the interaction events of the VINSA 1060Plus graphics tablet, that includes a passive two button pen.
-
-Linux detects it as a T501 GoTOP tablet, hence pyUSB library is able to interface with the tablet device.
+This is a simple driver with pyUSB code modified to handle the interaction events of the 10moons graphics tablet, that includes a passive two button pen.
 
 ## ❓ About
 
-This repository is a driver that provides basic functionality for VINSA 1060plus T501 tablet
+This repository is a driver that provides basic functionality for 10moons graphic tablets
 
-> May also work with other similar models, but not tested yet
-> *(for other models you can try modifying config file and make a contribution)*
->
-> Tested on 10moons G10 v2.0 (*product code:* `6970607220191`, *detected by* `lsusb` *as:* `08f2:6811`)
+> Tested on 10moons T503 (*product code:* `6970607220184`)
 
 ### ✨ Features
 
-- No `10moons-tools` needed
 - X / Y positioning with limiting
 - Pressure sensitivity and calibration (**no linearity correction yet**)
 - Configurable touch thresholds
 - Debug mode
-- Configurable evdev's UInput actions:
+- Configurable input actions:
   - Pen (stylus) buttons
-  - 12 buttons on the tablet itself
+  - Buttons on the tablet itself
 
-## 🏗️ How to install and use
-
-> ⚠️ **You need to connect your tablet and run the driver prior to launching a drawing software otherwise the device will not be recognized by it**
+## 🏗️ How to build and debug
 
 ### 1. Clone this repo
 
 ```shell
-git clone https://github.com/F33RNI/10moons-driver-vin1060plus.git
-cd 10moons-driver-vin1060plus
+git clone https://github.com/yktmd/10moons-driver-macos.git
+cd 10moons-driver-macos
 ```
 
 ### 2. Create python's virtual environment and install requirements
 
-> **NOTE:** Tested on Python `3.12.7`
+> **NOTE:** Tested on Python `3.13.12`
 
 ```shell
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ### 3. Connect your tablet and wait a little while until it is detected by the system
 
-### 4. Start driver in debug mode
+### 4. Start driver
 
 ```shell
-sudo venv/bin/python driver.py -d
+sudo venv/bin/python driver.py
 ```
 
-### 5. Calibrate pressure
+### 5. Calibrating the pressure
 
 1. Hover pen over tablet without touching it and write down `[RAW] Pressure: <-` value
 2. Now, touch tablet as hard as you can and write down `[RAW] Pressure: <-` value again
@@ -69,12 +61,6 @@ sudo venv/bin/python driver.py -d
 6. Determine pressure at which you want touch / release to be registered using value from `[OUT] X: ..., Y: ..., pressure: <-`
 7. Stop driver by pressing `CTRL` + `C`
 8. Edit `pressure_threshold_press` and `pressure_threshold_release` in config file if needed
-
-### 6. Start driver in normal mode
-
-```shell
-sudo venv/bin/python driver.py
-```
 
 > **NOTE:** You can provide path to config file with `-c [CONFIG]` argument
 >
@@ -162,8 +148,8 @@ actions:
 - Started as 10moons-driver by [Alex-S-V](https://github.com/alex-s-v/10moons-driver)
 - Forked by [f-caro](https://github.com/f-caro/10moons-driver-vin1060plus) and modified for `vin1060plus`
 - Refactored by [Fern Lane](https://github.com/F33RNI)
+- Forked by [yktmd](https://github.com/yktmd) and modified for MacOS and refactored.
 
-With linux Kernel 5+,  the graphics tablet should be detected but pen movement is restricted to Android Active Area (the small area on the tablet).  That driver was added to the kernel but interacts with the T503 chipset.
 Thanks to [Digimend - https://github.com/DIGImend](https://github.com/DIGImend) for providing valuable functionality not just to 10moons Tablets, but to a variety of other popular Tablets.
 
 Unfortuantely, Mr Digimend has chosen not to further develop the driver applicable to VINSA 1060plus, due to the inaccurate information transmitted between the T501 chipset and the USB driver --> [Live recording of Mr DIGIMEND working on 10moons tablet debug and analysis.  Awesome to see the master at work :)](https://www.youtube.com/watch?v=WmnSwjlpRBE).
@@ -172,7 +158,7 @@ So an alternative workaround was needed.  In steps Alex-S-V with his pyUSB imple
 
 The person to discover this "hack" was Mr.Digimend himself and thanks to the [Youtube video that he uploaded time-stamp @1:40.11](https://youtu.be/WmnSwjlpRBE?t=6011) he shows that usbhid-dump  output when in Android-Active-Area Mode (8 byte TX)  vs  the required  Full-Tablet-Active-Area mode (64 byte TX).
 
-At current state of repo, Fern Lane has refactored the code. She fixed the pressure calculation, moved most of the parameters to a configuration file, making it more universal (with the ability to use it on other similar models), added logs and cli args, made the usage more intuitive, and removed the need for `10moons-tools`.
+In the last fork of repo, Fern Lane has refactored the code. She fixed the pressure calculation, moved most of the parameters to a configuration file, making it more universal (with the ability to use it on other similar models), added logs and cli args, made the usage more intuitive, and removed the need for `10moons-tools`.
 
 ## 🌐 Credits
 
@@ -198,6 +184,8 @@ At current state of repo, Fern Lane has refactored the code. She fixed the press
 
 ## 📑 TODOS
 
+- Make a GUI and use it for calibration and mapping the buttons.
+
 - Map the 10 "virtual buttons" found on the top-side of the graphics tablet active area: (`mute`, `vol_dwn`, `vol_up`, `music_player`, `play_pause`, `prev_song`, `next_song`, `home_btn`, `calc_btn`, `desktop_view`)
 
 - Allow the Graphics App (e.g. Gimp, Scribus, Pix, Inkscape etc. ) to make use of the "pressure sensitivity" measurement
@@ -205,8 +193,6 @@ At current state of repo, Fern Lane has refactored the code. She fixed the press
 - Use its linear Z-axis "pressure sensitivity" measurements and map it to a non-linear function (maybe bezzier-curve) that simulates more natural pen strokes
 
 ## 🔗 Useful references
-
-- Docs to Python source code of UInput class :  <https://python-evdev.readthedocs.io/en/latest/_modules/evdev/uinput.html>
 
 - pyUSB tutorial howto : <https://github.com/pyusb/pyusb/blob/master/docs/tutorial.rst>
 
